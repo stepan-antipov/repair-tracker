@@ -1,0 +1,15 @@
+{:paths ["src"]
+ :deps {org.clojure/clojure {:mvn/version "1.12.0"}
+        ring/ring-core {:mvn/version "1.13.0"}
+        ring/ring-jetty-adapter {:mvn/version "1.13.0"}
+        ring/ring-devel {:mvn/version "1.10.0"}
+        clj-http/clj-http {:mvn/version "3.13.0"}
+        cheshire/cheshire {:mvn/version "5.13.0"}}}
+
+;; clj -M -m "tg-bot.core" 
+
+
+;;  lt --port 4000
+;; https://yellow-lions-enjoy.loca.lt
+
+;; curl -F "url= https://quiet-jars-grab.loca.lt/webhook" https://api.telegram.org/bot8185482677:AAERkQG046Cz9ah033GEzSOn0AaiW47JMV0/setWebhook

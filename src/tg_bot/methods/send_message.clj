@@ -1,0 +1,20 @@
+(ns tg-bot.methods.send-message
+  (:require
+   [cheshire.core :as json]
+   [clj-http.client :as client]
+   [tg-bot.utils.load-env :refer [env]]))
+
+
+(def telegram-token (get env "TELEGRAM_TOKEN"))
+
+
+(defn send-telegram-message [{:keys [chat-id message keyboard]}]
+  (let [url (str "https://api.telegram.org/bot" telegram-token "/sendMessage") 
+        default-params {:chat_id chat-id
+                        :text message}
+        params (if keyboard 
+                 (assoc default-params :reply_markup (json/generate-string keyboard))
+                 default-params)]
+    (client/post url {:form-params params})))
+
+
