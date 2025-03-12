@@ -3,4 +3,5 @@
 .clj-kondo
 .lsp
 .cpcache
-    
+buffer
+config.clj

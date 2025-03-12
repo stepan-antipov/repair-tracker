@@ -3,28 +3,48 @@
   (:require
    [cheshire.core :as json]
    [ring.adapter.jetty :refer [run-jetty]]
-   [ring.util.response :refer [response]]
    [ring.middleware.reload :refer [wrap-reload]]
-   [tg-bot.handlers.handle-info :refer [handle-info]]
-   [tg-bot.handlers.handle-start :refer [handle-start]]))
+   [ring.util.response :refer [response]]
+   [tg-bot.db.init-tables :as init-tables]
+   [tg-bot.handlers.callbacks.cancel-order :refer [cancel-order-flow]]
+   [tg-bot.handlers.callbacks.save-order :refer [save-order-flow]]
+   [tg-bot.handlers.commands.info :refer [handle-info]]
+   [tg-bot.handlers.commands.order :refer [handle-chat-input handle-order]]
+   [tg-bot.handlers.commands.start :refer [handle-start]]
+   [tg-bot.state :refer [chat-state]]))
 
 
 (defn handle-message [message] 
   (let [text (get message :text)
-        chat-id (get-in message [:chat :id])]
-    (when (= text "/start")
-      (handle-start chat-id))))
+        chat-id (get-in message [:chat :id])
+        state? (boolean (get @chat-state chat-id))]
+    (println "Chat ID:" chat-id)
+    (println (str "Chat state" @chat-state))
+    (println (str "Inside the chat:" (get @chat-state chat-id)))
+    (cond (= text "/start")
+          (handle-start chat-id)
+          state?
+          (handle-chat-input {:chat-id chat-id 
+                              :text text}))))
 
 
 (defn handle-callback [callback-query] 
-  (let [message (:message callback-query) 
-        data (:data callback-query)
-        chat-id (-> message :chat :id)] 
+  (let [{:keys [message data]} callback-query 
+        chat-id (-> message :chat :id)
+        {:keys [order]} (get @chat-state chat-id)
+        message-id (:message_id message)] 
     (case data
-        "/info" (handle-info chat-id)
-        ;"/worksheet" (handle-worksheet chat-id)
-        ;"/search_worksheet" (handle-search chat-id)
-        )))
+      "/info" (handle-info chat-id)
+      "/order" (handle-order chat-id)
+      "/save_order" (save-order-flow {:chat-id chat-id
+                                      :order order
+                                      :message-id message-id})
+      "/cancel_order" (cancel-order-flow {:chat-id chat-id
+                                          :message-id message-id})
+      
+     ;"/search_order" (handle-search chat-id)
+      )))
+
 
 
 (defn wrapped-handlers [{:keys [message callback-query]}] 
@@ -42,8 +62,8 @@
       (wrapped-handlers {:message message 
                          :callback-query callback_query}) 
 
-      (println payload)
-      (println callback_query)
+      (println "Payload:  " payload "\n")
+      (println "Callback query " callback_query)
 
       (response "OK"))
 
@@ -52,6 +72,7 @@
 
 
 (defn app [request]
+  (println "Request: " request "\n")
   (case (:uri request)
     "/webhook" (handle-webhook request)
     (response "Not found 404")))
@@ -62,15 +83,8 @@
 
 
 
-(defn -main []
+(defn -main [& args]
   (println "Сервер запущен на порту 4000")
-  (run-jetty wrapped-app {:port 4000}))
-
-
-
-;; {:update_id 239340005, :callback_query {:id 5842050594249827690, :from {:id 1360208400, :is_bot false, :first_name Vadik, :last_name alfavir.orig, :language_code ru}, :message {:message_id 97, :from {:id 8185482677, :is_bot true, :first_name RepairTracker, :username RepairTrackerBot}, :chat {:id -1002288796045, :title Архив 2.0, :type supergroup}, :date 1740323023, :text Тут будет текст, который пользователь бота будет видеть впервые, а также краткое описание для кнопок в клавиатуре, :reply_markup {:inline_keyboard [[{:text 📌 Информация, :callback_data /info} {:text 📞 Проверить клиента, :callback_data /check_client}] [{:text ✏️ Редактировать анкету, :callback_data /edit_worksheet} {:text 🔎 Найти анкету, :callback_data /search_worksheet}] [{:text 📝 Создать анкету, :callback_data /worksheet}]]}}, :chat_instance -57937855276544147
-;; 31, :data /info}} 
-
-
-
-;; {:update_id 239340014, :message {:message_id 103, :from {:id 914014303, :is_bot false, :first_name Степан, :last_name Антипов, :username clojure_sith, :language_code ru}, :chat {:id -1002288796045, :title Архив 2.0, :type supergroup}, :date 1740335489, :text /start, :entities [{:offset 0, :length 6, :type bot_command}]}}
+  (if (= (first args) "init-tables")
+    (init-tables/-main)
+    (run-jetty wrapped-app {:port 4000})))

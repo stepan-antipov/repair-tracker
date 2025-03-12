@@ -8,7 +8,7 @@
 (def telegram-token (get env "TELEGRAM_TOKEN"))
 
 
-(defn send-telegram-message [{:keys [chat-id message keyboard]}]
+(defn send-telegram-message [{:keys [chat-id message keyboard]}] 
   (let [url (str "https://api.telegram.org/bot" telegram-token "/sendMessage") 
         default-params {:chat_id chat-id
                         :text message}
