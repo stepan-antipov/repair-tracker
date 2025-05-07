@@ -1,5 +1,9 @@
 (ns tg-bot.state)
 
 
-(def chat-state (atom {})) ;; {:chat-id {:state :phone-model
-                            ;;            :orders {...}}
+;; {:chat-id {:state :phone-model or :order-search 
+;;            :orders {...} 
+;;            :search-params {...} }
+
+
+(def chat-state (atom {})) 

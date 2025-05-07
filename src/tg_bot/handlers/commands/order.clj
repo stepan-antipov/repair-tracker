@@ -1,21 +1,10 @@
 (ns tg-bot.handlers.commands.order
-  (:require 
+  (:require
    [tg-bot.methods.send-message :refer [send-telegram-message]]
-   [tg-bot.state :refer [chat-state]]))
-
-
-
-(def inline-keyboard
-  {:inline_keyboard
-   [[{:text "✅ Сохранить" :callback_data "/save_order"} 
-     {:text "❌ Сброс" :callback_data "/cancel_order"}]]})
-
-
-
-(defn form-order-message [{:keys [phone-model phone-number client-name diagnosis photo]}]
-  (format 
-    "Ваша анкета:\n\n📱 %s\n\n☎️ %s\n\n🙍‍♂️ %s\n\n🛠️ %s\n\n📷 %s" 
-    phone-model phone-number client-name diagnosis photo))
+   [tg-bot.methods.send-photo :refer [send-photo]]
+   [tg-bot.state :refer [chat-state]]
+   [tg-bot.ui.keyboards :refer [save-or-cancel-keyboard]]
+   [tg-bot.ui.messages :refer [form-order-message]]))
 
 
 
@@ -35,25 +24,27 @@
 
 
 
-(defn process-order [{:keys [chat-id text state-key]}]
-  (swap! chat-state update-in [chat-id :order] assoc state-key text) ;; photo
+(defn process-order [{:keys [chat-id file-id state-key]}]
+  (swap! chat-state update-in [chat-id :order] assoc state-key file-id) ;; photo
   (let [{:keys [order]} (get @chat-state chat-id)
-        {:keys [phone-model phone-number client-name diagnosis photo]} order] 
+        {:keys [phone-model phone-number client-name diagnosis]} order] 
+    (send-photo {:chat-id chat-id 
+                 :file-id file-id})
     (send-telegram-message {:chat-id chat-id
                             :message (form-order-message 
                                        {:phone-model phone-model
                                         :phone-number phone-number
                                         :client-name client-name
                                         :diagnosis diagnosis
-                                        :photo photo})
-                            :keyboard inline-keyboard})))
+                                        :file-id file-id})
+                            :keyboard save-or-cancel-keyboard})))
 
 
 
-(defn handle-chat-input [{:keys [chat-id text]}] 
+(defn handle-chat-input [{:keys [chat-id text file-id action]}] 
   (println (str "State " @chat-state)) 
 
-  (case (get-in @chat-state [chat-id :state])
+  (case action
     :phone-model 
     (update-chat-state-and-send-message {:chat-id chat-id
                                          :state-key :phone-model
@@ -78,12 +69,12 @@
     :diagnosis
     (update-chat-state-and-send-message {:chat-id chat-id
                                          :state-key :diagnosis
-                                         :next-state-key :photo
+                                         :next-state-key :file-id
                                          :message "Пришлите фото устройства"
                                          :text text})
 
-    :photo
+    :file-id
     (process-order {:chat-id chat-id
-                    :text text 
-                    :state-key :photo})
+                    :file-id file-id 
+                    :state-key :file-id})
     (println "что-то пошло не так")))

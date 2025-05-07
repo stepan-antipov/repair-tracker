@@ -10,4 +10,4 @@
                            :message-id message-id})
   (swap! chat-state dissoc chat-id)
   (send-telegram-message {:chat-id chat-id
-                          :message "Вы отменили заполнение анккеты"}))
+                          :message "Вы отменили заполнение анкеты"}))

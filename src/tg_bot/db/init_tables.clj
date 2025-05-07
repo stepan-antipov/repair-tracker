@@ -22,8 +22,8 @@
     chat_id BIGINT NOT NULL, 
     phone_model TEXT NOT NULL, 
     client_name TEXT NOT NULL,
-    agreement TEXT NOT NULL,
-    status VARCHAR(50) NOT NULL, 
+    diagnosis TEXT NOT NULL,
+    status VARCHAR(50),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);"))
 
 
@@ -32,8 +32,7 @@
    "CREATE TABLE photos (
     id SERIAL PRIMARY KEY,
     order_id INT REFERENCES orders(id) ON DELETE CASCADE, 
-    file_id VARCHAR(255) NOT NULL,
-    file_path VARCHAR NOT NULL, 
+    file_id VARCHAR(255) NOT NULL, 
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);"))
 
 

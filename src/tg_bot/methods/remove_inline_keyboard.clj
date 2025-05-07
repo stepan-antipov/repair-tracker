@@ -1,12 +1,7 @@
 (ns tg-bot.methods.remove-inline-keyboard
   (:require 
    [clj-http.client :as client]
-   [tg-bot.utils.load-env :refer [env]]))
-
-
-
-
-(def telegram-token (get env "TELEGRAM_TOKEN"))
+   [tg-bot.config :refer [telegram-token]]))
 
 
 (defn remove-inline-keyboard [{:keys [chat-id message-id]}]
